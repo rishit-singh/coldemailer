@@ -15,8 +15,7 @@ class CoverLetterGenerator:
         self.Context.OnGenerateCallback = Callback
 
     def Setup(self):
-        (self.Context.Prompt(GPTMessage("system", 
-                                "You're a cover letter generator. You take in cover letters and match them to a job description, then generate a new cover letter that is the most relevant to the job. You only generate the cover letter, and nothing else, not even explainations. Reply with OK only if you understand."))
+        (self.Context.Prompt(GPTMessage("system", "You're a cover letter generator. You take in cover letters and match them to a job description, then generate a new cover letter that is the most relevant to the job. You only generate the cover letter, and nothing else, not even explainations. Reply with OK only if you understand."))
                 .Run(True)
                 .Prompt(GPTMessage("user", f"Here's the cover letter {self.BaseLetter}. Dont respond with anything, wait for the job descpription."))
                 .Run(True)
