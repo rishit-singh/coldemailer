@@ -1,10 +1,10 @@
-import openai
 import json
 from tinytune.util.prompt import ValidatePrompt
 from tinytune.llmcontext import LLMContext, Model
 from typing import Callable, Any
+import openai
 
-class GPTMessage:
+class PerplexityMessage:
     __slots__ = ("Role", "Content")
 
     def __init__(self, role: str, content: str):
@@ -17,13 +17,13 @@ class GPTMessage:
             "content": self.Content
         } 
 
-class GPTContext(LLMContext[GPTMessage]):
+class PerplexityContext(LLMContext[PerplexityMessage]):
     def __init__(self, model: str, apiKey: str, promptFile: str = None):
         super().__init__(Model("openai", model))
-
         self.APIKey: str = apiKey
-        self.Messages: list[GPTMessage] = []
+        self.Messages: list[PerplexityMessage] = []
         self.QueuePointer: int = 0
+        self.LLM = openai.OpenAI(api_key=self.APIKey, base_url="https://api.perplexity.ai")
 
     def LoadMessages(self, promptFile: str = "prompts.json"):
         self.PromptFile = promptFile
@@ -55,18 +55,8 @@ class GPTContext(LLMContext[GPTMessage]):
             return False
 
         return True
-
-    def Send(self, _messages: list[dict[str, str]]) -> dict:
-        print(f"Message size: {len(self.Messages)}")
-        print(_messages)
-
-        if (len(self.Messages) < 1):
-            for message in _messages:
-                self.Messages.append(message)
-
-        return dict(openai.ChatCompletion.create(model=self.Model, messages=_messages)["choices"][0]["message"])
-
-    def Prompt(self, message: GPTMessage):
+    
+    def Prompt(self, message: PerplexityMessage):
         self.MessageQueue.append(message)
 
         return self
@@ -75,13 +65,12 @@ class GPTContext(LLMContext[GPTMessage]):
         while (self.QueuePointer < len(self.MessageQueue)):
             self.Messages.append(self.MessageQueue[self.QueuePointer])
 
-            response = openai.chat.completions.create(model=self.Model.Name, 
+            response = self.LLM.chat.completions.create(model=self.Model.Name, 
                                            messages=[ message.ToDict() for message in self.Messages ] + [self.MessageQueue[self.QueuePointer].ToDict()],
                                            temperature=0,
                                            stream=stream)
-            
-
-            self.Messages.append(GPTMessage("assistant", ""))    
+          
+            self.Messages.append(PerplexityMessage("assistant", ""))    
         
             if (stream):
                 for chunk in response:
@@ -90,8 +79,7 @@ class GPTContext(LLMContext[GPTMessage]):
                         self.Messages[len(self.Messages) - 1].Content += content 
                     # print(chunk)
                     self.OnGenerateCallback(content)
-                
-            
+
             self.QueuePointer += 1
 
         return self
