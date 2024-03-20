@@ -5,7 +5,7 @@ from tinytune.pipeline import Pipeline, PromptJob
 from CoverLetter import CoverLetterGenerator
 from PerplexityContext import PerplexityContext, PerplexityMessage
 
-llm = PerplexityContext("mixtral-8x7b-instruct", os.getenv("OPENAI_KEY"))
+llm = PerplexityContext("pplx-70b-online", os.getenv("PERPLEXITY_KEY"))
 
 def Callback(content):
         if (content != None):
@@ -15,9 +15,16 @@ def Callback(content):
 
 llm.OnGenerateCallback = Callback 
 
-llm.Prompt(PerplexityMessage("user", "Hello LLM"))
-llm.Run(True)
+(llm.Prompt(PerplexityMessage("user", ""))
+    .Run(True))
 
+print(llm.Messages[-1].Content.find('```'))
+message = str(llm.Messages[-1].Content[llm.Messages[-1].Content.find('```json'):])
+
+message = message[:message.find('```')]
+
+print()
+print(message)
 # with open(sys.argv[1], 'r') as fp:
 #     letterGen = CoverLetterGenerator(os.getenv("OPENAI_KEY"), fp.read())
 #     letterGen.Setup()

@@ -14,12 +14,12 @@ class PerplexityMessage:
     def ToDict(self):
         return {
             "role": self.Role,
-            "content": self.Content
+            "content": (self.Content)
         } 
 
 class PerplexityContext(LLMContext[PerplexityMessage]):
     def __init__(self, model: str, apiKey: str, promptFile: str = None):
-        super().__init__(Model("openai", model))
+        super().__init__(Model("mistralai", model))
         self.APIKey: str = apiKey
         self.Messages: list[PerplexityMessage] = []
         self.QueuePointer: int = 0
@@ -66,12 +66,12 @@ class PerplexityContext(LLMContext[PerplexityMessage]):
             self.Messages.append(self.MessageQueue[self.QueuePointer])
 
             response = self.LLM.chat.completions.create(model=self.Model.Name, 
-                                           messages=[ message.ToDict() for message in self.Messages ] + [self.MessageQueue[self.QueuePointer].ToDict()],
+                                           messages=[ message.ToDict() for message in self.Messages ],
                                            temperature=0,
                                            stream=stream)
           
             self.Messages.append(PerplexityMessage("assistant", ""))    
-        
+
             if (stream):
                 for chunk in response:
                     content = chunk.choices[0].delta.content
